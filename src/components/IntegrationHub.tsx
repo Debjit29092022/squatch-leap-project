@@ -1,8 +1,12 @@
+
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Settings, Zap, Check, Plus, Play, Workflow, Shield } from "lucide-react";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useToast } from "@/hooks/use-toast";
+import { Settings, Zap, Check, Plus, Play, Workflow, Shield, X, ExternalLink } from "lucide-react";
 
 interface Integration {
   id: string;
@@ -14,10 +18,17 @@ interface Integration {
   features: string[];
   automationEnabled: boolean;
   lastSync: string;
+  webhookUrl?: string;
+  apiKey?: string;
 }
 
 export const IntegrationHub = () => {
-  const integrations: Integration[] = [
+  const { toast } = useToast();
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
+  const [isConfiguring, setIsConfiguring] = useState(false);
+
+  const [integrations, setIntegrations] = useState<Integration[]>([
     {
       id: "1",
       name: "Salesforce",
@@ -27,7 +38,8 @@ export const IntegrationHub = () => {
       logo: "🔗",
       features: ["Lead sync", "Opportunity tracking", "Contact management", "Automated scoring"],
       automationEnabled: true,
-      lastSync: "2 minutes ago"
+      lastSync: "2 minutes ago",
+      apiKey: "sf_demo_key_***"
     },
     {
       id: "2",
@@ -49,7 +61,8 @@ export const IntegrationHub = () => {
       logo: "💬",
       features: ["Lead notifications", "Team alerts", "Activity updates", "Custom workflows"],
       automationEnabled: true,
-      lastSync: "Just now"
+      lastSync: "Just now",
+      webhookUrl: "https://hooks.slack.com/services/***"
     },
     {
       id: "4",
@@ -60,7 +73,8 @@ export const IntegrationHub = () => {
       logo: "⚡",
       features: ["Custom workflows", "Multi-app integration", "Trigger actions", "AI-powered routing"],
       automationEnabled: true,
-      lastSync: "1 hour ago"
+      lastSync: "1 hour ago",
+      webhookUrl: "https://hooks.zapier.com/hooks/catch/***"
     },
     {
       id: "5",
@@ -82,11 +96,96 @@ export const IntegrationHub = () => {
       logo: "📧",
       features: ["List sync", "Campaign tracking", "Automation triggers", "Personalization AI"],
       automationEnabled: true,
-      lastSync: "5 minutes ago"
+      lastSync: "5 minutes ago",
+      apiKey: "mc_demo_key_***"
     }
-  ];
+  ]);
 
   const categories = ["All", "CRM", "Communication", "Automation", "Analytics", "Email Marketing"];
+
+  const filteredIntegrations = selectedCategory === "All" 
+    ? integrations 
+    : integrations.filter(integration => integration.category === selectedCategory);
+
+  const connectedCount = integrations.filter(i => i.status === "connected").length;
+  const automatedCount = integrations.filter(i => i.automationEnabled).length;
+  const todayDataCount = integrations
+    .filter(i => i.status === "connected")
+    .reduce((acc, curr) => acc + Math.floor(Math.random() * 500) + 100, 0);
+
+  const handleConnect = (integrationId: string) => {
+    setIntegrations(prev => prev.map(integration => 
+      integration.id === integrationId 
+        ? { 
+            ...integration, 
+            status: "connected" as const, 
+            lastSync: "Just now",
+            apiKey: `${integration.name.toLowerCase()}_demo_key_***`
+          }
+        : integration
+    ));
+
+    const integration = integrations.find(i => i.id === integrationId);
+    toast({
+      title: "Integration Connected",
+      description: `${integration?.name} has been successfully connected to your account.`,
+    });
+  };
+
+  const handleDisconnect = (integrationId: string) => {
+    setIntegrations(prev => prev.map(integration => 
+      integration.id === integrationId 
+        ? { 
+            ...integration, 
+            status: "available" as const, 
+            lastSync: "Never",
+            automationEnabled: false,
+            apiKey: undefined,
+            webhookUrl: undefined
+          }
+        : integration
+    ));
+
+    const integration = integrations.find(i => i.id === integrationId);
+    toast({
+      title: "Integration Disconnected",
+      description: `${integration?.name} has been disconnected from your account.`,
+      variant: "destructive",
+    });
+  };
+
+  const handleAutomationToggle = (integrationId: string, enabled: boolean) => {
+    setIntegrations(prev => prev.map(integration => 
+      integration.id === integrationId 
+        ? { ...integration, automationEnabled: enabled }
+        : integration
+    ));
+
+    const integration = integrations.find(i => i.id === integrationId);
+    toast({
+      title: enabled ? "Automation Enabled" : "Automation Disabled",
+      description: `Automation for ${integration?.name} has been ${enabled ? 'enabled' : 'disabled'}.`,
+    });
+  };
+
+  const handleSync = (integrationId: string) => {
+    setIntegrations(prev => prev.map(integration => 
+      integration.id === integrationId 
+        ? { ...integration, lastSync: "Just now" }
+        : integration
+    ));
+
+    const integration = integrations.find(i => i.id === integrationId);
+    toast({
+      title: "Sync Initiated",
+      description: `Manual sync started for ${integration?.name}.`,
+    });
+  };
+
+  const handleConfigure = (integration: Integration) => {
+    setSelectedIntegration(integration);
+    setIsConfiguring(true);
+  };
 
   return (
     <div className="space-y-8">
@@ -116,8 +215,8 @@ export const IntegrationHub = () => {
             <Check className="w-4 h-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-900">4</div>
-            <p className="text-xs text-green-700">+2 this month</p>
+            <div className="text-2xl font-bold text-green-900">{connectedCount}</div>
+            <p className="text-xs text-green-700">+{Math.floor(Math.random() * 3) + 1} this month</p>
           </CardContent>
         </Card>
 
@@ -127,7 +226,7 @@ export const IntegrationHub = () => {
             <Workflow className="w-4 h-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-900">12</div>
+            <div className="text-2xl font-bold text-blue-900">{automatedCount * 3}</div>
             <p className="text-xs text-blue-700">Running smoothly</p>
           </CardContent>
         </Card>
@@ -138,7 +237,7 @@ export const IntegrationHub = () => {
             <Zap className="w-4 h-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-900">1,247</div>
+            <div className="text-2xl font-bold text-purple-900">{todayDataCount.toLocaleString()}</div>
             <p className="text-xs text-purple-700">Records processed</p>
           </CardContent>
         </Card>
@@ -148,7 +247,12 @@ export const IntegrationHub = () => {
         {categories.map((category) => (
           <button
             key={category}
-            className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-blue-600 transition-colors"
+            onClick={() => setSelectedCategory(category)}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${
+              selectedCategory === category
+                ? "text-blue-600 border-b-2 border-blue-600"
+                : "text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-blue-600"
+            }`}
           >
             {category}
           </button>
@@ -156,7 +260,7 @@ export const IntegrationHub = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {integrations.map((integration) => (
+        {filteredIntegrations.map((integration) => (
           <Card key={integration.id} className="hover:shadow-lg transition-shadow border-0 bg-white/80 backdrop-blur-sm">
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -183,6 +287,7 @@ export const IntegrationHub = () => {
                       <span className="text-xs text-gray-500">Auto</span>
                       <Switch 
                         checked={integration.automationEnabled}
+                        onCheckedChange={(checked) => handleAutomationToggle(integration.id, checked)}
                       />
                     </div>
                   )}
@@ -219,16 +324,29 @@ export const IntegrationHub = () => {
               <div className="flex items-center space-x-2">
                 {integration.status === "connected" ? (
                   <>
-                    <Button variant="outline" size="sm" className="flex-1">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => handleConfigure(integration)}
+                    >
                       <Settings className="w-4 h-4 mr-2" />
                       Configure
                     </Button>
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleSync(integration.id)}
+                    >
                       <Play className="w-4 h-4" />
                     </Button>
                   </>
                 ) : (
-                  <Button size="sm" className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                  <Button 
+                    size="sm" 
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                    onClick={() => handleConnect(integration.id)}
+                  >
                     <Zap className="w-4 h-4 mr-2" />
                     Connect Now
                   </Button>
@@ -238,6 +356,113 @@ export const IntegrationHub = () => {
           </Card>
         ))}
       </div>
+
+      <Sheet open={isConfiguring} onOpenChange={setIsConfiguring}>
+        <SheetContent className="w-[400px] sm:w-[540px]">
+          <SheetHeader>
+            <SheetTitle className="flex items-center space-x-2">
+              <span className="text-2xl">{selectedIntegration?.logo}</span>
+              <span>Configure {selectedIntegration?.name}</span>
+            </SheetTitle>
+            <SheetDescription>
+              Manage your {selectedIntegration?.name} integration settings and automation rules.
+            </SheetDescription>
+          </SheetHeader>
+          
+          {selectedIntegration && (
+            <div className="space-y-6 mt-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Connection Status</h3>
+                <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center space-x-3">
+                    <Check className="w-5 h-5 text-green-600" />
+                    <div>
+                      <p className="font-medium text-green-900">Connected</p>
+                      <p className="text-sm text-green-700">Last sync: {selectedIntegration.lastSync}</p>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleDisconnect(selectedIntegration.id)}
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Disconnect
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Automation Settings</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">Auto-sync leads</p>
+                      <p className="text-sm text-gray-600">Automatically sync new leads every 15 minutes</p>
+                    </div>
+                    <Switch 
+                      checked={selectedIntegration.automationEnabled}
+                      onCheckedChange={(checked) => handleAutomationToggle(selectedIntegration.id, checked)}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">Real-time notifications</p>
+                      <p className="text-sm text-gray-600">Send instant alerts for high-value leads</p>
+                    </div>
+                    <Switch checked={true} />
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">Data enrichment</p>
+                      <p className="text-sm text-gray-600">Enhance lead profiles with additional data</p>
+                    </div>
+                    <Switch checked={selectedIntegration.automationEnabled} />
+                  </div>
+                </div>
+              </div>
+
+              {selectedIntegration.apiKey && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">API Configuration</h3>
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <p className="text-sm font-medium mb-2">API Key</p>
+                    <p className="text-sm text-gray-600 font-mono">{selectedIntegration.apiKey}</p>
+                  </div>
+                </div>
+              )}
+
+              {selectedIntegration.webhookUrl && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Webhook Configuration</h3>
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <p className="text-sm font-medium mb-2">Webhook URL</p>
+                    <p className="text-sm text-gray-600 font-mono break-all">{selectedIntegration.webhookUrl}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex space-x-3 pt-4">
+                <Button 
+                  className="flex-1"
+                  onClick={() => handleSync(selectedIntegration.id)}
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Sync Now
+                </Button>
+                <Button variant="outline" asChild>
+                  <a href="#" target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    View Docs
+                  </a>
+                </Button>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
