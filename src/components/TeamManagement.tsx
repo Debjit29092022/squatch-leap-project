@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Plus, Mail, Settings, Users } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface TeamMember {
   id: string;
@@ -18,7 +18,8 @@ interface TeamMember {
 }
 
 export const TeamManagement = () => {
-  const [teamMembers] = useState<TeamMember[]>([
+  const { toast } = useToast();
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
     {
       id: "1",
       name: "John Doe",
@@ -61,6 +62,41 @@ export const TeamManagement = () => {
     }
   ]);
 
+  const handleAddMember = () => {
+    toast({
+      title: "Add Team Member",
+      description: "Opening team member invitation form...",
+    });
+  };
+
+  const handleSendEmail = (member: TeamMember) => {
+    toast({
+      title: "Email Sent",
+      description: `Email sent to ${member.name} (${member.email})`,
+    });
+  };
+
+  const handleMemberSettings = (member: TeamMember) => {
+    toast({
+      title: "Member Settings",
+      description: `Opening settings for ${member.name}`,
+    });
+  };
+
+  const toggleMemberStatus = (memberId: string) => {
+    setTeamMembers(prev => prev.map(member => 
+      member.id === memberId 
+        ? { ...member, status: member.status === "active" ? "inactive" : "active" as const }
+        : member
+    ));
+
+    const member = teamMembers.find(m => m.id === memberId);
+    toast({
+      title: "Status Updated",
+      description: `${member?.name} status changed to ${member?.status === "active" ? "inactive" : "active"}`,
+    });
+  };
+
   const getRoleColor = (role: string) => {
     switch (role) {
       case "Admin":
@@ -84,7 +120,7 @@ export const TeamManagement = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Team Management</h2>
-        <Button className="bg-blue-600 hover:bg-blue-700">
+        <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleAddMember}>
           <Plus className="w-4 h-4 mr-2" />
           Add Team Member
         </Button>
@@ -157,16 +193,19 @@ export const TeamManagement = () => {
                     <Badge className={getRoleColor(member.role)}>
                       {member.role}
                     </Badge>
-                    <Badge className={getStatusColor(member.status)}>
+                    <button 
+                      onClick={() => toggleMemberStatus(member.id)}
+                      className={`px-2 py-1 text-xs rounded-full font-medium transition-colors ${getStatusColor(member.status)}`}
+                    >
                       {member.status}
-                    </Badge>
+                    </button>
                   </div>
                   
                   <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={() => handleSendEmail(member)}>
                       <Mail className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={() => handleMemberSettings(member)}>
                       <Settings className="w-4 h-4" />
                     </Button>
                   </div>

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,6 +26,7 @@ export const IntegrationHub = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
   const [isConfiguring, setIsConfiguring] = useState(false);
+  const [isLoading, setIsLoading] = useState<string | null>(null);
 
   const [integrations, setIntegrations] = useState<Integration[]>([
     {
@@ -113,23 +113,29 @@ export const IntegrationHub = () => {
     .filter(i => i.status === "connected")
     .reduce((acc, curr) => acc + Math.floor(Math.random() * 500) + 100, 0);
 
-  const handleConnect = (integrationId: string) => {
-    setIntegrations(prev => prev.map(integration => 
-      integration.id === integrationId 
-        ? { 
-            ...integration, 
-            status: "connected" as const, 
-            lastSync: "Just now",
-            apiKey: `${integration.name.toLowerCase()}_demo_key_***`
-          }
-        : integration
-    ));
+  const handleConnect = async (integrationId: string) => {
+    setIsLoading(integrationId);
+    
+    // Simulate API call
+    setTimeout(() => {
+      setIntegrations(prev => prev.map(integration => 
+        integration.id === integrationId 
+          ? { 
+              ...integration, 
+              status: "connected" as const, 
+              lastSync: "Just now",
+              apiKey: `${integration.name.toLowerCase()}_demo_key_***`
+            }
+          : integration
+      ));
 
-    const integration = integrations.find(i => i.id === integrationId);
-    toast({
-      title: "Integration Connected",
-      description: `${integration?.name} has been successfully connected to your account.`,
-    });
+      const integration = integrations.find(i => i.id === integrationId);
+      toast({
+        title: "Integration Connected",
+        description: `${integration?.name} has been successfully connected to your account.`,
+      });
+      setIsLoading(null);
+    }, 2000);
   };
 
   const handleDisconnect = (integrationId: string) => {
@@ -152,6 +158,7 @@ export const IntegrationHub = () => {
       description: `${integration?.name} has been disconnected from your account.`,
       variant: "destructive",
     });
+    setIsConfiguring(false);
   };
 
   const handleAutomationToggle = (integrationId: string, enabled: boolean) => {
@@ -187,6 +194,20 @@ export const IntegrationHub = () => {
     setIsConfiguring(true);
   };
 
+  const handleAddIntegration = () => {
+    toast({
+      title: "Add Integration",
+      description: "Opening integration marketplace...",
+    });
+  };
+
+  const handleAutomationCenter = () => {
+    toast({
+      title: "Automation Center",
+      description: "Opening automation workflow builder...",
+    });
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -197,11 +218,11 @@ export const IntegrationHub = () => {
           <p className="text-gray-600 mt-2">Connect your tools and automate your workflows</p>
         </div>
         <div className="flex items-center space-x-3">
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleAutomationCenter}>
             <Workflow className="w-4 h-4 mr-2" />
             Automation Center
           </Button>
-          <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+          <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700" onClick={handleAddIntegration}>
             <Plus className="w-4 h-4 mr-2" />
             Add Integration
           </Button>
@@ -346,9 +367,10 @@ export const IntegrationHub = () => {
                     size="sm" 
                     className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                     onClick={() => handleConnect(integration.id)}
+                    disabled={isLoading === integration.id}
                   >
                     <Zap className="w-4 h-4 mr-2" />
-                    Connect Now
+                    {isLoading === integration.id ? "Connecting..." : "Connect Now"}
                   </Button>
                 )}
               </div>
@@ -452,11 +474,14 @@ export const IntegrationHub = () => {
                   <Play className="w-4 h-4 mr-2" />
                   Sync Now
                 </Button>
-                <Button variant="outline" asChild>
-                  <a href="#" target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    View Docs
-                  </a>
+                <Button variant="outline" onClick={() => {
+                  toast({
+                    title: "Opening Documentation",
+                    description: `Opening ${selectedIntegration.name} integration documentation...`,
+                  });
+                }}>
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  View Docs
                 </Button>
               </div>
             </div>

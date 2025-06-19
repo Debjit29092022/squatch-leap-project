@@ -3,8 +3,44 @@ import { Bell, Search, Settings, User, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 export const DashboardHeader = () => {
+  const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      toast({
+        title: "Search",
+        description: `Searching for: ${searchQuery}`,
+      });
+    }
+  };
+
+  const handleNotifications = () => {
+    toast({
+      title: "Notifications",
+      description: "You have 3 new notifications",
+    });
+  };
+
+  const handleSettings = () => {
+    toast({
+      title: "Settings",
+      description: "Opening user settings...",
+    });
+  };
+
+  const handleProfile = () => {
+    toast({
+      title: "Profile",
+      description: "Opening user profile...",
+    });
+  };
+
   return (
     <header className="bg-white/80 backdrop-blur-xl border-b border-gray-200/50 px-8 py-6 shadow-sm">
       <div className="flex items-center justify-between">
@@ -18,22 +54,24 @@ export const DashboardHeader = () => {
         </div>
         
         <div className="flex items-center space-x-4">
-          <div className="relative">
+          <form onSubmit={handleSearch} className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
               placeholder="Search leads, campaigns..."
               className="pl-10 w-72 bg-white/50 backdrop-blur-sm border-gray-200/50"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
-          </div>
+          </form>
           
-          <Button variant="ghost" size="sm" className="relative">
+          <Button variant="ghost" size="sm" className="relative" onClick={handleNotifications}>
             <Bell className="w-4 h-4" />
             <Badge className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center p-0">
               3
             </Badge>
           </Button>
           
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" onClick={handleSettings}>
             <Settings className="w-4 h-4" />
           </Button>
           
@@ -45,9 +83,12 @@ export const DashboardHeader = () => {
                 Pro Plan
               </div>
             </div>
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
+            <button 
+              className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow"
+              onClick={handleProfile}
+            >
               <User className="w-5 h-5 text-white" />
-            </div>
+            </button>
           </div>
         </div>
       </div>
