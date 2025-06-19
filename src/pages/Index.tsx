@@ -8,7 +8,7 @@ import { IntegrationHub } from "@/components/IntegrationHub";
 import { TeamManagement } from "@/components/TeamManagement";
 import { AutomationWorkflows } from "@/components/AutomationWorkflows";
 import { AdvancedAnalytics } from "@/components/AdvancedAnalytics";
-import { LeadScoring } from "@/components/LeadScoring";
+import { EnhancedLeadScoring } from "@/components/EnhancedLeadScoring";
 import { ProfessionalSidebar } from "@/components/ProfessionalSidebar";
 
 const Index = () => {
@@ -25,7 +25,7 @@ const Index = () => {
                 <LeadsTable />
               </div>
               <div className="space-y-6">
-                <LeadScoring />
+                <EnhancedLeadScoring />
               </div>
             </div>
           </div>
@@ -49,7 +49,7 @@ const Index = () => {
                 <LeadsTable />
               </div>
               <div className="space-y-6">
-                <LeadScoring />
+                <EnhancedLeadScoring />
               </div>
             </div>
           </div>
